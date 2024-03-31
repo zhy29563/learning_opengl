@@ -1,0 +1,81 @@
+variables:
+  BLT_DIR: $CI_PROJECT_DIR/build_x86_64
+
+before_script:
+  - echo $(pwd)
+
+# default:
+#   tags:
+#     - cpt
+
+# workflow:
+#   rules:
+#     - if: ! $CI_COMMIT_TAG
+
+stages:
+  - build
+  - test
+  - release
+
+build_pc:
+  stage: build
+  dependencies: [ ]
+  script:
+    - cmake -S $CI_PROJECT_DIR -B ${BLT_DIR}
+    - make  -C ${BLT_DIR} -j8 > /dev/null
+
+unit_test:
+  stage: test
+  dependencies: [ ]
+  script:
+    - cmake -S $CI_PROJECT_DIR -B ${BLT_DIR}
+    - make  -C ${BLT_DIR} -j8  test_module_add test_module_sub test_module_all > /dev/null
+    - ${BLT_DIR}/tests/test_module_add/test_module_add --gtest_output="xml:test_module_add.xml" 2>&1 >/dev/null
+    - ${BLT_DIR}/tests/test_module_sub/test_module_sub --gtest_output="xml:test_module_sub.xml" 2>&1 >/dev/null
+    - ${BLT_DIR}/tests/test_module_all/test_module_all --gtest_output="xml:test_module_all.xml" 2>&1 >/dev/null
+    - xsltproc ${CI_PROJECT_DIR}/resources/tools/gtest2html.xslt "test_module_add.xml" >test_module_add.html
+    - xsltproc ${CI_PROJECT_DIR}/resources/tools/gtest2html.xslt "test_module_sub.xml" >test_module_sub.html
+    - xsltproc ${CI_PROJECT_DIR}/resources/tools/gtest2html.xslt "test_module_all.xml" >test_module_all.html
+  artifacts:
+    name: unittest-report
+    expose_as: unittest-report
+    public: true
+    paths:
+      - test_module_add.html
+      - test_module_sub.html
+      - test_module_all.html
+    reports:
+      junit: test_module_all.xml
+
+api_doc:
+  stage: release
+  image: runner:doxygen
+  script:
+    - mkdir outputs
+    - doxygen ${CI_PROJECT_DIR}/Doxyfile
+    - cd ${CI_PROJECT_DIR}/outputs/doc/latex
+    - sed -i '/\\begin{document}/i\\\usepackage{CJKutf8}'    refman.tex
+    - sed -i '/\\begin{document}/a\\\begin{CJK}{UTF8}{gkai}' refman.tex
+    - sed -i '/\\end{document}/i\\\end{CJK}'                 refman.tex
+    - make
+    - cp refman.pdf ${CI_PROJECT_DIR}/api-manual.pdf
+  artifacts:
+    paths:
+      - api-manual.pdf
+
+
+release_job:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  # rules:
+  #   - if: $CI_COMMIT_TAG
+  script:
+    - echo "running release_job"
+    - ls
+  release: # See https://docs.gitlab.com/ee/ci/yaml/#release for available properties
+    tag_name: v'$CI_COMMIT_SHORT_SHA'
+    description: 'test-release'
+  except:
+    refs: 
+      - tags
+

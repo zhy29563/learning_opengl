@@ -1,0 +1,21 @@
+{
+  "cmake.configureArgs": [
+    //"-DCMAKE_TOOLCHAIN_FILE=${env:HOME}/.envs/toolchains/gcc-ubuntu-9.3.0-2020.03-x86_64-aarch64-linux-gnu/toolchain.cmake"
+  ],
+  "cmake.buildArgs": [
+    "-j16"
+  ],
+  "cmake.environment": {
+    "LD_LIBRARY_PATH": "/lib/x86_64-linux-gnu/:/lib64"
+  },
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "cSpell.words": [
+    "Cflags",
+    "GPERFTOOLS",
+    "includedir",
+    "libdir",
+    "lmodule",
+    "pcfiledir",
+    "VALGRIND"
+  ]
+}

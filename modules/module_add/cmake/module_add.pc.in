@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}/bin
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: module_add
+Description: add module
+Version: @PROJECT_VERSION@
+URL: https://smaple.com
+Libs: -L${libdir} -lmodule_add
+Cflags: -I${includedir}
